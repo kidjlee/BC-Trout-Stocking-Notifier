@@ -76,7 +76,6 @@ def main() -> int:
 
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
-    discord_webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
 
     try:
         events: list[dict[str, Any]] = scraper.scrape_stocking_events(REGION)
@@ -106,25 +105,18 @@ def main() -> int:
     message = notifier.format_message(new_events)
     print(message)
 
-    # Send to every channel that is configured. The bot works with Telegram,
-    # Discord, or both -- whichever secrets are present.
-    results: list[bool] = []
-    if token and chat_id:
-        results.append(notifier.send_telegram_message(token, chat_id, message))
-    if discord_webhook:
-        results.append(notifier.send_discord_message(discord_webhook, message))
-
-    if not results:
-        logger.error("No notification channel configured (set Telegram and/or Discord secrets).")
+    if not (token and chat_id):
+        logger.error("Telegram secrets not configured; cannot notify.")
         logger.warning("Leaving state unchanged so events aren't lost.")
         return 0
 
-    if any(results):
-        # At least one channel delivered -- record events so we don't repeat them.
+    sent = notifier.send_telegram_message(token, chat_id, message)
+
+    if sent:
         save_seen_ids(seen_ids | current_ids)
     else:
-        # Every configured channel failed; retry on the next run.
-        logger.warning("All notifications failed; leaving state unchanged to retry next run.")
+        # Don't mark events as seen if the notification failed, so we retry next run.
+        logger.warning("Notification not sent; leaving state unchanged to retry next run.")
 
     return 0
 

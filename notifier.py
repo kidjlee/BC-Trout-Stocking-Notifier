@@ -73,63 +73,6 @@ def format_message(events: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def send_discord_message(webhook_url: str, text: str) -> bool:
-    """Send a message to a Discord channel via an incoming webhook.
-
-    A webhook needs no bot account or token -- just the URL. Returns ``True`` on
-    success, ``False`` on failure. Never raises.
-
-    Discord caps a message at 2000 characters, so long notifications are split
-    into multiple chunks on event boundaries.
-    """
-    if not webhook_url:
-        logger.error("Discord webhook URL missing; cannot send notification.")
-        return False
-
-    chunks = _split_for_discord(text)
-    all_ok = True
-    for index, chunk in enumerate(chunks, start=1):
-        if not _post_discord_chunk(webhook_url, chunk, index, len(chunks)):
-            all_ok = False
-    return all_ok
-
-
-def _split_for_discord(text: str, limit: int = 1900) -> list[str]:
-    """Split text into <=limit-char chunks, preferring blank-line boundaries."""
-    if len(text) <= limit:
-        return [text]
-
-    chunks: list[str] = []
-    current = ""
-    for block in text.split("\n\n"):
-        candidate = f"{current}\n\n{block}" if current else block
-        if len(candidate) > limit and current:
-            chunks.append(current)
-            current = block
-        else:
-            current = candidate
-    if current:
-        chunks.append(current)
-    return chunks
-
-
-def _post_discord_chunk(webhook_url: str, content: str, index: int, total: int) -> bool:
-    for attempt in range(1, MAX_ATTEMPTS + 1):
-        try:
-            logger.info("Sending Discord message %d/%d (attempt %d/%d)...", index, total, attempt, MAX_ATTEMPTS)
-            resp = requests.post(webhook_url, json={"content": content}, timeout=REQUEST_TIMEOUT_SECONDS)
-            resp.raise_for_status()
-            logger.info("Discord message %d/%d sent successfully.", index, total)
-            return True
-        except requests.RequestException as exc:
-            logger.warning("Discord send attempt %d failed: %s", attempt, exc)
-            if attempt < MAX_ATTEMPTS:
-                time.sleep(BACKOFF_BASE_SECONDS ** attempt)
-
-    logger.error("Failed to send Discord message %d/%d after %d attempts.", index, total, MAX_ATTEMPTS)
-    return False
-
-
 def send_telegram_message(token: str, chat_id: str, text: str) -> bool:
     """Send a message via Telegram with retries + exponential backoff.
 

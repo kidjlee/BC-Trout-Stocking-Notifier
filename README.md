@@ -3,11 +3,8 @@
 [![Daily Fish Stocking Check](https://github.com/kidjlee/bc-fish-stocking-notifier/actions/workflows/daily_check.yml/badge.svg)](https://github.com/kidjlee/bc-fish-stocking-notifier/actions/workflows/daily_check.yml)
 
 A zero-cost, zero-server bot that watches the [GoFishBC stocking report](https://www.gofishbc.com/stocked-fish/)
-for the **Lower Mainland (Region 2)** and pings you on **Telegram and/or Discord**
+for the **Lower Mainland (Region 2)** and sends you a **Telegram** message
 whenever new lakes get stocked with fish.
-
-> Pick whichever notifier you like — Telegram, Discord, or both. The bot sends a
-> message to every channel that has its secret(s) configured.
 
 It runs entirely on **GitHub Actions** — there is **no computer to keep on** and
 **no database to manage**. GitHub's cloud servers run the check on a daily cron
@@ -70,45 +67,27 @@ required — just `requests` + `BeautifulSoup`.
 
 ## One-time setup
 
-You need **at least one** notification channel. Set up Telegram (steps a–b),
-Discord (step a-discord), or both — then add the matching secrets (step c).
-
-### Option 1 — Discord (simplest: just a webhook URL)
-
-1. In your Discord server, go to **Server Settings → Integrations → Webhooks**.
-2. Click **New Webhook**, pick the channel you want alerts in, and **Copy Webhook URL**
-   (looks like `https://discord.com/api/webhooks/<id>/<token>`).
-3. Add it as a GitHub secret named `DISCORD_WEBHOOK_URL` (see step c).
-
-That's it for Discord — no bot account or token required.
-
-### Option 2 — Telegram
-
-#### a. Create a Telegram bot and get the token
+### a. Create a Telegram bot and get the token
 
 1. Open Telegram and message [@BotFather](https://t.me/BotFather).
 2. Send `/newbot` and follow the prompts (give it a name and username).
 3. BotFather replies with a **token** that looks like
    `123456789:ABCdefGhIJKlmNoPQRsTUVwxyz`. Copy it.
 
-#### b. Get your Telegram chat ID
+### b. Get your Telegram chat ID
 
 1. Message [@userinfobot](https://t.me/userinfobot) on Telegram.
 2. It replies with your numeric **chat ID** (e.g. `12345678`). Copy it.
 3. **Important:** open a chat with *your* new bot and send it any message (e.g.
    `hi`). A bot cannot message you until you've messaged it first.
 
-### c. Add your secrets to GitHub
+### c. Add both as GitHub Secrets
 
-In this repository on GitHub, go to
-**Settings → Secrets and variables → Actions → New repository secret** and add
-the secrets for the channel(s) you set up:
+In this repository on GitHub:
 
-| Channel | Secret name | Value |
-| --- | --- | --- |
-| Discord | `DISCORD_WEBHOOK_URL` | the webhook URL |
-| Telegram | `TELEGRAM_BOT_TOKEN` | the bot token from step (a) |
-| Telegram | `TELEGRAM_CHAT_ID` | the chat ID from step (b) |
+1. Go to **Settings → Secrets and variables → Actions → New repository secret**.
+2. Add a secret named `TELEGRAM_BOT_TOKEN` with the token from step (a).
+3. Add a secret named `TELEGRAM_CHAT_ID` with the chat ID from step (b).
 
 ### d. Enable GitHub Actions
 
@@ -179,10 +158,9 @@ bc-fish-stocking-notifier/
 └── README.md
 ```
 
-## Secrets (configure at least one channel)
+## Required secrets
 
 | Secret | Where to get it |
 | --- | --- |
-| `DISCORD_WEBHOOK_URL` | Discord → Server Settings → Integrations → Webhooks |
 | `TELEGRAM_BOT_TOKEN` | [@BotFather](https://t.me/BotFather) on Telegram |
 | `TELEGRAM_CHAT_ID` | [@userinfobot](https://t.me/userinfobot) on Telegram |
